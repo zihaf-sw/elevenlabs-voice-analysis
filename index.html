@@ -1,0 +1,1180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>ElevenLabs 음성 분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap">
+<style>
+:root{
+  --ink:#0E1620;
+  --ink-2:#18242F;
+  --paper:#F7F5F2;
+  --surface:#FFFFFF;
+  --surface-2:#F0EDE8;
+  --text:#1B242D;
+  --text-2:#5A6570;
+  --text-3:#8A939C;
+  --line:#E2DED7;
+  --line-2:#CFCAC2;
+  --signal:#12857B;
+  --signal-soft:#E3F1EF;
+  --signal-ink:#0B5F58;
+  --amber:#A66A18;
+  --amber-soft:#F8EFE1;
+  --amber-line:#E7D2B0;
+  --on-ink:#F3F1ED;
+  --on-ink-2:#9AA7B2;
+  --on-ink-line:#2A3742;
+  --sans:"IBM Plex Sans KR","Malgun Gothic","맑은 고딕",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --maxw:1140px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#10171E;
+    --surface:#161F27;
+    --surface-2:#1B252E;
+    --text:#E9ECEE;
+    --text-2:#A9B3BC;
+    --text-3:#7C8792;
+    --line:#26323C;
+    --line-2:#33414D;
+    --signal:#3FC3B4;
+    --signal-soft:#11302E;
+    --signal-ink:#7AD9CC;
+    --amber:#D9A257;
+    --amber-soft:#2A2113;
+    --amber-line:#4A3A20;
+    --ink:#0A1016;
+    --ink-2:#121C25;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#10171E;
+  --surface:#161F27;
+  --surface-2:#1B252E;
+  --text:#E9ECEE;
+  --text-2:#A9B3BC;
+  --text-3:#7C8792;
+  --line:#26323C;
+  --line-2:#33414D;
+  --signal:#3FC3B4;
+  --signal-soft:#11302E;
+  --signal-ink:#7AD9CC;
+  --amber:#D9A257;
+  --amber-soft:#2A2113;
+  --amber-line:#4A3A20;
+  --ink:#0A1016;
+  --ink-2:#121C25;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--paper);color:var(--text);
+  font-family:var(--sans);font-size:17px;line-height:1.75;
+  -webkit-font-smoothing:antialiased;letter-spacing:-0.005em;
+}
+h1,h2,h3,h4{margin:0;text-wrap:balance;letter-spacing:-0.02em;line-height:1.25}
+p{margin:0}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--signal);outline-offset:3px;border-radius:2px}
+
+/* ---------- layout ---------- */
+.wrap{max-width:var(--maxw);margin:0 auto;padding-inline:20px}
+section{scroll-margin-top:84px}
+.band{padding-block:clamp(56px,7vw,96px);border-top:1px solid var(--line)}
+.band--dark{background:var(--ink);color:var(--on-ink);border-top:none}
+.band--dark h2,.band--dark h3{color:var(--on-ink)}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:50;
+  background:color-mix(in srgb,var(--paper) 88%,transparent);
+  backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.topbar__inner{max-width:var(--maxw);margin:0 auto;padding:10px 20px;display:flex;align-items:center;gap:18px}
+.brandmark{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;white-space:nowrap}
+.brandmark .bars{display:flex;align-items:flex-end;gap:2px;height:16px}
+.brandmark .bars i{display:block;width:3px;background:var(--signal);border-radius:1px}
+.navlinks{display:flex;gap:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+.navlinks::-webkit-scrollbar{display:none}
+.navlinks a{
+  font-family:var(--mono);font-size:12px;letter-spacing:0.02em;text-decoration:none;color:var(--text-2);
+  padding:6px 10px;border-radius:6px;white-space:nowrap;
+}
+.navlinks a:hover{color:var(--text);background:var(--surface-2)}
+.navlinks a.is-active{color:var(--signal-ink);background:var(--signal-soft)}
+.progress{height:2px;background:var(--signal);width:0%;transition:width .12s linear}
+
+/* ---------- hero ---------- */
+.hero{background:var(--ink);color:var(--on-ink);position:relative;overflow:hidden}
+.hero__inner{max-width:var(--maxw);margin:0 auto;padding:clamp(48px,7vw,84px) 20px clamp(40px,5vw,64px)}
+.eyebrow{
+  font-family:var(--mono);font-size:12px;letter-spacing:0.14em;text-transform:uppercase;
+  color:var(--signal);display:flex;align-items:center;gap:10px;
+}
+.eyebrow::after{content:"";flex:1;height:1px;background:var(--on-ink-line);max-width:140px}
+.hero h1{
+  font-size:clamp(40px,7vw,68px);font-weight:600;letter-spacing:-0.035em;
+}
+.hero h1 .thin{font-weight:300;color:var(--on-ink-2)}
+.hero__lead{
+  margin-top:20px;max-width:56ch;color:#C9D2DA;font-size:clamp(16px,1.7vw,19px);line-height:1.7;font-weight:300;
+}
+.hero__meta{
+  margin-top:34px;padding-top:22px;border-top:1px solid var(--on-ink-line);
+  display:flex;flex-wrap:wrap;gap:10px 36px;font-family:var(--mono);font-size:12.5px;color:var(--on-ink-2);
+}
+.hero__meta b{color:var(--on-ink);font-weight:500}
+.wave{display:flex;align-items:flex-end;gap:3px;height:56px;margin-top:38px}
+.wave i{flex:1;background:linear-gradient(to top,#12857B,#3FC3B4);border-radius:1px;opacity:.55;min-height:3px}
+
+/* ---------- section heads ---------- */
+.sechead{display:flex;gap:18px;align-items:baseline;margin-bottom:12px}
+.sechead__num{font-family:var(--mono);font-size:13px;color:var(--signal);letter-spacing:.06em;padding-top:6px}
+.sechead h2{font-size:clamp(25px,3.2vw,34px);font-weight:600}
+.sechead__sub{color:var(--text-2);max-width:62ch;margin-top:10px;font-size:16.5px}
+.band--dark .sechead__sub{color:var(--on-ink-2)}
+
+/* ---------- generic blocks ---------- */
+.grid{display:grid;gap:20px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.g3,.g4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.g2,.g3,.g4{grid-template-columns:1fr}}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:22px 22px 24px}
+.card h3{font-size:19px;font-weight:600;margin-bottom:8px}
+.card p{color:var(--text-2);font-size:15.5px;line-height:1.7}
+.card__tag{
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--signal-ink);display:block;margin-bottom:10px;
+}
+.list{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:10px}
+.list li{position:relative;padding-left:16px;color:var(--text-2);font-size:15.5px;line-height:1.7}
+.list li::before{content:"";position:absolute;left:0;top:11px;width:6px;height:6px;border-radius:50%;background:var(--line-2)}
+.list li b{color:var(--text);font-weight:600}
+.band--dark .list li{color:var(--on-ink-2)}
+.band--dark .list li b{color:var(--on-ink)}
+
+.mono{font-family:var(--mono)}
+.tag{
+  display:inline-block;font-family:var(--mono);font-size:12px;padding:3px 8px;border-radius:5px;
+  background:var(--signal-soft);color:var(--signal-ink);border:1px solid color-mix(in srgb,var(--signal) 25%,transparent);
+}
+
+/* ---------- story (동기) ---------- */
+.story{display:grid;grid-template-columns:200px 1fr;gap:0 32px}
+@media(max-width:760px){.story{grid-template-columns:1fr;gap:6px}}
+.story__step{border-top:1px solid var(--line);padding-block:26px;display:contents}
+.story__row{display:contents}
+.story__label{border-top:1px solid var(--line);padding-block:26px}
+.story__label .n{font-family:var(--mono);font-size:12px;color:var(--signal);display:block;margin-bottom:6px}
+.story__label h3{font-size:19px;font-weight:600}
+.story__body{border-top:1px solid var(--line);padding-block:26px;color:var(--text-2);font-size:16px}
+@media(max-width:760px){
+  .story__label{border-top:1px solid var(--line);padding-block:20px 0}
+  .story__body{border-top:none;padding-block:10px 22px}
+}
+.story__body p + p{margin-top:12px}
+.quote{
+  margin-top:14px;padding:14px 18px;border-left:3px solid var(--signal);background:var(--signal-soft);
+  color:var(--signal-ink);font-size:16px;border-radius:0 8px 8px 0;
+}
+
+/* ---------- flow ---------- */
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:8px}
+@media(max-width:980px){.flow{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.flow{grid-template-columns:1fr}}
+.flow__step{
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 16px 18px;position:relative;
+}
+.flow__step .n{font-family:var(--mono);font-size:11.5px;color:var(--text-3)}
+.flow__step h4{font-size:16px;margin:6px 0 6px;font-weight:600}
+.flow__step p{font-size:14px;color:var(--text-2);line-height:1.6}
+.flow__step--now{border-color:var(--signal);background:var(--signal-soft)}
+.flow__step--now h4{color:var(--signal-ink)}
+
+/* ---------- table ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-top:8px}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:14.5px}
+th,td{padding:14px 16px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{
+  background:var(--surface-2);font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--text-2);font-weight:500;white-space:nowrap;
+}
+tbody th{font-weight:600;white-space:nowrap;color:var(--text)}
+td{color:var(--text-2);line-height:1.6}
+tbody tr.is-focus{background:var(--signal-soft)}
+tbody tr.is-focus th{color:var(--signal-ink)}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:none}
+td .mono{font-size:13px;color:var(--text-3);display:block;margin-top:3px}
+
+/* ---------- player ---------- */
+.player{
+  background:var(--ink-2);border:1px solid var(--on-ink-line);border-radius:12px;padding:22px;
+  display:grid;gap:16px;
+}
+.player.is-b{border-color:#1C5C56}
+.player__head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.player__badge{
+  font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink);background:var(--on-ink-2);
+  width:26px;height:26px;border-radius:6px;display:grid;place-items:center;
+}
+.player.is-b .player__badge{background:#3FC3B4}
+.player__title{font-size:17px;font-weight:600;color:var(--on-ink)}
+.player__spec{display:grid;gap:6px;font-family:var(--mono);font-size:12.5px;color:var(--on-ink-2)}
+.player__spec div{display:flex;gap:10px}
+.player__spec span{color:#6E7C88;min-width:66px}
+.viz{height:64px;display:flex;align-items:flex-end;gap:2px;background:#0C1319;border-radius:8px;padding:8px}
+.viz i{flex:1;background:#2B3A45;border-radius:1px;min-height:2px;transition:height .06s linear,background .2s}
+.player.is-playing .viz i{background:#3FC3B4}
+.player__controls{display:flex;align-items:center;gap:14px}
+.btn-play{
+  display:inline-flex;align-items:center;gap:9px;font:inherit;font-size:14.5px;font-weight:500;
+  color:var(--ink);background:var(--on-ink);border:none;border-radius:999px;padding:9px 18px 9px 14px;cursor:pointer;
+}
+.player.is-b .btn-play{background:#3FC3B4}
+.btn-play:hover{opacity:.88}
+.btn-play svg{width:14px;height:14px}
+.time{font-family:var(--mono);font-size:12.5px;color:var(--on-ink-2)}
+.bar{flex:1;height:4px;background:#25323C;border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--on-ink-2)}
+.player.is-b .bar i{background:#3FC3B4}
+.conditions{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:22px}
+.conditions__label{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:#6E7C88;margin-right:4px}
+.cond{
+  font-family:var(--mono);font-size:12.5px;color:#3FC3B4;border:1px solid #1C5C56;background:#11292666;
+  padding:4px 10px;border-radius:999px;
+}
+.cond::before{content:"✓ ";opacity:.8}
+.cond--off{color:#D9A257;border-color:#4A3A20;background:#2A211366}
+.cond--off::before{content:"→ "}
+.player.is-ab{border-color:#3A4A56;background:linear-gradient(180deg,#18242F,#141E27)}
+.player.is-ab .player__badge{background:#E9ECEE;font-size:11px;width:auto;padding:0 8px}
+.player.is-ab .btn-play{background:#E9ECEE}
+.player.is-ab.is-playing .viz i{background:#8BD0C7}
+.bar{position:relative}
+.bar .split{position:absolute;left:50%;top:-3px;width:1px;height:10px;background:#5A6A76}
+.pending{
+  font-size:12.5px;color:#D9A257;background:#231C10;border:1px dashed #4A3A20;
+  border-radius:8px;padding:10px 12px;line-height:1.6;
+}
+.pending b{color:#E9ECEE;font-weight:500}
+.runorder{
+  margin-top:22px;border:1px dashed var(--on-ink-line);border-radius:10px;padding:16px 18px;
+  display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;font-size:14.5px;color:var(--on-ink-2);
+}
+.runorder .step{display:flex;align-items:center;gap:8px}
+.runorder .step b{font-family:var(--mono);font-size:12px;color:var(--ink);background:#3FC3B4;border-radius:4px;padding:1px 6px}
+
+/* ---------- callouts ---------- */
+.callout{
+  border:1px solid var(--amber-line);background:var(--amber-soft);border-radius:10px;padding:20px 22px;
+}
+.callout h3{font-size:17px;color:var(--amber);margin-bottom:10px;display:flex;align-items:center;gap:9px}
+.callout .list li{color:var(--text-2)}
+.callout .list li::before{background:var(--amber-line)}
+.verdict{
+  border:1px solid var(--line);border-left:4px solid var(--signal);background:var(--surface);
+  border-radius:0 10px 10px 0;padding:24px 26px;
+}
+.verdict .card__tag{margin-bottom:8px}
+.verdict p{font-size:18px;line-height:1.7;color:var(--text)}
+
+/* ---------- swot ---------- */
+.swot{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+@media(max-width:720px){.swot{grid-template-columns:1fr}}
+.swot__q{border:1px solid var(--line);border-radius:10px;padding:20px 22px;background:var(--surface)}
+.swot__q h3{font-size:17px;display:flex;align-items:center;gap:10px}
+.swot__q h3 em{
+  font-family:var(--mono);font-style:normal;font-size:12px;width:24px;height:24px;border-radius:6px;
+  display:grid;place-items:center;background:var(--surface-2);color:var(--text-2);
+}
+.swot__q--pos{border-color:color-mix(in srgb,var(--signal) 32%,var(--line))}
+.swot__q--pos h3 em{background:var(--signal-soft);color:var(--signal-ink)}
+.swot__q--neg h3 em{background:var(--amber-soft);color:var(--amber)}
+
+/* ---------- misc ---------- */
+.kpi{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}
+.kpi div{
+  border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--surface);
+  font-family:var(--mono);font-size:13px;color:var(--text-2);
+}
+.kpi b{display:block;font-size:19px;color:var(--text);font-weight:600;letter-spacing:-0.01em}
+.band--dark .kpi div{background:var(--ink-2);border-color:var(--on-ink-line);color:var(--on-ink-2)}
+.band--dark .kpi b{color:var(--on-ink)}
+.note{color:var(--text-3);font-size:13.5px;line-height:1.7;margin-top:16px}
+.band--dark .note{color:#6E7C88}
+.srclist{display:grid;gap:12px;margin-top:8px}
+.srcitem{display:grid;grid-template-columns:190px 1fr;gap:6px 24px;padding-bottom:12px;border-bottom:1px solid var(--on-ink-line)}
+@media(max-width:700px){.srcitem{grid-template-columns:1fr}}
+.srcitem dt{font-family:var(--mono);font-size:12.5px;color:#6E7C88}
+.srcitem dd{margin:0;font-size:14.5px;color:var(--on-ink-2);word-break:break-all}
+.srcitem dd a{color:#3FC3B4;text-decoration:none}
+.srcitem dd a:hover{text-decoration:underline}
+footer{padding-block:34px;color:var(--text-3);font-size:13px}
+
+/* 섹션은 항상 보이는 상태로 렌더된다. 진입 시 살짝 떠오르는 효과만 CSS로 처리 */
+@media (prefers-reduced-motion: no-preference){
+  .reveal{animation:rise .6s cubic-bezier(.2,.7,.3,1) both}
+  @keyframes rise{from{opacity:.35;transform:translateY(10px)}to{opacity:1;transform:none}}
+}
+</style>
+
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar__inner">
+    <span class="brandmark">
+      <span class="bars" aria-hidden="true"><i style="height:6px"></i><i style="height:13px"></i><i style="height:9px"></i><i style="height:16px"></i></span>
+      ElevenLabs 기업분석
+    </span>
+    <nav class="navlinks" aria-label="섹션 이동">
+      <a href="#motive">동기</a>
+      <a href="#company">기업</a>
+      <a href="#why">흐름</a>
+      <a href="#product">기능</a>
+      <a href="#tech">기술</a>
+      <a href="#compare">경쟁</a>
+      <a href="#ab">A/B 청취</a>
+      <a href="#workflow">제작</a>
+      <a href="#swot">SWOT</a>
+      <a href="#verdict">결론</a>
+    </nav>
+  </div>
+  <div class="progress" id="progress"></div>
+</div>
+
+<header class="hero">
+  <div class="hero__inner">
+    <h1>ElevenLabs<br><span class="thin">AI 음성은 어떻게 콘텐츠와<br>인터페이스를 바꾸는가</span></h1>
+    <p class="hero__lead">
+      코엑스 AI Summit에서 들은 Voice AI 강연 한 편에서 시작해, 제가 직접 유료 플랜을 결제해
+      유튜브 콘텐츠에 적용한 기록까지. 기업의 공식 주장과 제가 실제로 관찰한 것,
+      그리고 이 비교가 <b>말할 수 없는 것</b>까지 함께 정리했습니다.
+    </p>
+    <div class="hero__meta">
+      <span>발표자 <b>양소연</b></span>
+      <span>소속 <b>AI바이오푸드테크학과</b></span>
+      <span>발표일 <b>2026. 09. 21.</b></span>
+      <span>분량 <b>15분 · 10개 섹션</b></span>
+    </div>
+    <div class="wave" id="heroWave" aria-hidden="true"></div>
+  </div>
+</header>
+
+<!-- ============================ 동기 ============================ -->
+<section id="motive" class="band">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="sechead__num">01</span>
+      <div>
+        <h2>왜 이 기업을 골랐는가</h2>
+        <p class="sechead__sub">요즘 뜨는 AI 콘텐츠 채널을 직접 해보려다 음성의 부자연스러움에 막혔고, 그때 들은 강연 한 편이 출발점이 됐습니다.</p>
+      </div>
+    </div>
+
+    <div class="story reveal">
+      <div class="story__label"><span class="n">CONTEXT</span><h3>처음 알게 된 계기</h3></div>
+      <div class="story__body">
+        <p>코엑스에서 열린 <b>AI Summit Seoul &amp; Expo</b>에서 ElevenLabs GTM 소속 연사의 Voice AI 세션을 들었습니다.
+        세션 제목은 <span class="tag">From Creative to Agentic AI</span> 였고, 부제는 “Voice AI Leading the Next AI Era”였습니다.</p>
+        <p>당시 저는 음성 합성을 ‘텍스트를 읽어주는 도구’ 정도로만 알고 있었습니다. 강연은 그 전제를 정면으로 흔들었습니다.</p>
+      </div>
+
+      <div class="story__label"><span class="n">INSIGHT</span><h3>인상 깊었던 세 가지</h3></div>
+      <div class="story__body">
+        <ul class="list" style="margin-top:0">
+          <li><b>음성은 기능이 아니라 인터페이스다.</b> 콘텐츠를 읽어주는 단계를 넘어, 사람이 AI와 주고받는 통로가 된다는 관점이었습니다.</li>
+          <li><b>Creative AI에서 Agentic AI로.</b> 창작 도구(ElevenCreative), 음성·채팅 에이전트(ElevenAgents), 개발자용 ElevenAPI가 한 제품군으로 연결되는 구조를 처음 봤습니다.</li>
+          <li><b>화자를 ‘설계’할 수 있다.</b> 내 목소리를 복제하거나, 원하는 화자 캐릭터를 글로 설명해 만들어내는 방식이 가장 인상 깊었습니다.</li>
+        </ul>
+      </div>
+
+      <div class="story__label"><span class="n">PROBLEM</span><h3>가장 큰 문제는 ‘거부감’이었습니다</h3></div>
+      <div class="story__body">
+        <p>요즘 AI로 제작하는 콘텐츠 채널이 빠르게 늘어나는 걸 보고, 저도 <b>괴담 내레이션 채널</b>을 직접 시작해 봤습니다.
+        이 장르에서 음성은 부속이 아니라 콘텐츠 자체입니다. 같은 대본이라도 어디서 끊어 읽는지, 어느 단어에 힘을 주는지,
+        문장 사이 여백을 얼마나 두는지에 따라 영상의 인상이 완전히 달라집니다.</p>
+        <p>그런데 막상 만들어 보니 <b>음성이 너무 부자연스러웠습니다.</b> 단순히 품질이 아쉬운 정도가 아니라,
+        기계가 문장을 읽고 있다는 티가 나는 순간 <b>듣는 사람이 콘텐츠 자체에 거부감을 느끼는</b> 것이 가장 큰 문제였습니다.
+        무서워야 할 이야기가 어색해지면 장르가 무너집니다.</p>
+        <p>제가 조절할 수 있는 것은 사실상 <b>속도와 피치 두 개</b>뿐이었고, 대본을 아무리 고쳐도 이 거부감은 해결되지 않았습니다.</p>
+        <div class="quote">“음성을 바꾸면 이 거부감이 실제로 줄어들까?” — 이 질문에 답하려고 유료 플랜을 결제했고, 그 결과가 이 발표입니다.</div>
+      </div>
+
+      <div class="story__label"><span class="n">CRITERIA</span><h3>선택 이유</h3></div>
+      <div class="story__body">
+        <p>분석 대상으로 고른 이유는 세 가지입니다. ① 제품군이 창작에서 에이전트까지 넓어 <b>기업 전략을 볼 여지</b>가 있고,
+        ② 공식 문서가 기능·언어 수·지연시간까지 공개돼 있어 <b>근거를 확인</b>할 수 있으며,
+        ③ 무엇보다 제가 <b>직접 결제해 내 콘텐츠로 검증</b>할 수 있는 기업이었습니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 기업 ============================ -->
+<section id="company" class="band">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="sechead__num">02</span>
+      <div>
+        <h2>ElevenLabs는 어떤 기업인가</h2>
+        <p class="sechead__sub">‘사람 같은 목소리 모델’ 하나로 시작해, 지금은 오디오·미디어·에이전트를 함께 다루는 플랫폼으로 확장했습니다.</p>
+      </div>
+    </div>
+
+    <div class="grid g2 reveal" style="margin-top:26px">
+      <div class="card">
+        <span class="card__tag">Identity &amp; Vision</span>
+        <h3>기업 정체성과 비전</h3>
+        <ul class="list">
+          <li><b>공식 소개:</b> “AI research and product company” — 사람이 기술과 상호작용하는 방식 자체를 바꾸는 연구·제품 기업이라고 스스로를 정의합니다.</li>
+          <li><b>출발점:</b> 기계음처럼 들리지 않는 <b>최초의 human-like voice model</b> 개발. 음성 합성의 품질 문제를 먼저 풀고 그 위에 제품을 쌓았습니다.</li>
+          <li><b>비전:</b> 기술과 소통하고 콘텐츠를 만드는 경험을 매끄럽게 만드는 것. 즉 ‘도구’가 아니라 ‘경험’을 목표로 서술합니다.</li>
+          <li><b>구성:</b> 연구자·엔지니어·운영 인력으로 구성되며 IOI 메달리스트와 전직 창업자들이 포함돼 있다고 밝힙니다.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="card__tag">Safety</span>
+        <h3>안전과 책임</h3>
+        <ul class="list">
+          <li><b>전담 안전팀:</b> 연구·엔지니어링·정책을 결합한 교차기능 팀을 두고, “AI 안전은 혁신과 분리될 수 없다”고 명시합니다.</li>
+          <li><b>다층 방어:</b> 설계 단계부터의 안전성, 추적 가능성, 투명성, 신속 대응, 협력 — 다섯 원칙을 공개하고 있습니다.</li>
+          <li><b>동의·검증:</b> 전문 음성 복제(PVC)는 기술적 검증을 요구하고, 유명인·고위험 음성 복제는 차단합니다.</li>
+          <li><b>출처 표시:</b> 콘텐츠 출처 표준 <span class="mono">C2PA</span>를 지원하고, AI 생성 여부를 판별하는 <b>AI Speech Classifier</b>를 공개했습니다.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="margin-top:34px;font-size:18px">세 개의 플랫폼</h3>
+    <div class="grid g3 reveal" style="margin-top:14px">
+      <div class="card">
+        <span class="card__tag">ElevenCreative</span>
+        <h3>창작자·마케터</h3>
+        <p>70개 이상 언어에서 음성·음악·이미지·영상을 생성하고 편집합니다. <b>이번 발표에서 제가 사용한 영역이 여기입니다.</b></p>
+      </div>
+      <div class="card">
+        <span class="card__tag">ElevenAgents</span>
+        <h3>기업 고객지원</h3>
+        <p>음성·채팅 에이전트를 대규모로 배포하는 층. 콘텐츠 제작이 아니라 상담·예약 같은 실무 워크플로를 겨냥합니다.</p>
+      </div>
+      <div class="card">
+        <span class="card__tag">ElevenAPI</span>
+        <h3>개발자·연구자</h3>
+        <p>오디오 모델을 자기 제품이나 실험에 직접 연결합니다. 연구 프로토타입을 만들 때 실제로 만나게 되는 지점입니다.</p>
+      </div>
+    </div>
+
+    <div class="kpi reveal">
+      <div><b>70+</b> Eleven v3 지원 언어</div>
+      <div><b>90+</b> 더빙 지원 언어</div>
+      <div><b>~75ms</b> Flash v2.5 지연시간</div>
+      <div><b>~280ms</b> v3 Conversational</div>
+    </div>
+    <p class="note">※ 위 내용과 수치는 모두 <b>회사의 공식 문서·소개 페이지에 적힌 자기 기술(claim)</b>이며, 제3자가 측정한 성능 결과가 아닙니다. 이 발표에서는 회사 주장 / 제 관찰 / 제 해석을 계속 구분해 표시합니다.</p>
+  </div>
+</section>
+
+<!-- ============================ 흐름 ============================ -->
+<section id="why" class="band">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="sechead__num">03</span>
+      <div>
+        <h2>왜 지금 Voice AI인가</h2>
+        <p class="sechead__sub">음성 기술은 다섯 단계로 이동해 왔습니다. 제가 쓰던 방식은 첫 칸, 지금 시장이 향하는 곳은 마지막 칸입니다.</p>
+      </div>
+    </div>
+
+    <div class="flow reveal">
+      <div class="flow__step"><span class="n">01 / 과거</span><h4>전통적 TTS</h4><p>정해진 음성으로 또박또박 낭독. 조절 가능한 것은 속도와 피치 정도.</p></div>
+      <div class="flow__step"><span class="n">02</span><h4>자연스러운 생성</h4><p>사람 목소리와 구분이 어려운 수준의 합성. 품질 문제가 먼저 해결된 단계.</p></div>
+      <div class="flow__step"><span class="n">03</span><h4>캐릭터·감정 설계</h4><p>누가, 어떤 감정으로, 어디서 멈추며 말하는지를 지정하는 단계.</p></div>
+      <div class="flow__step"><span class="n">04</span><h4>다국어 더빙</h4><p>화자의 정체성과 감정을 유지한 채 언어만 교체. 재녹음 없이 시장 확장.</p></div>
+      <div class="flow__step flow__step--now"><span class="n">05 / 현재</span><h4>실시간 음성 에이전트</h4><p>듣고 답하는 대화형 인터페이스. 콘텐츠가 아니라 서비스의 층.</p></div>
+    </div>
+
+    <div class="grid g4 reveal" style="margin-top:24px">
+      <div class="card">
+        <span class="card__tag">Cost</span><h3>제작 비용과 시간</h3>
+        <p>성우 섭외와 재녹음 없이 대본만 고쳐 음성을 다시 만듭니다. 수정 비용이 사실상 0에 가까워지면 제작 방식 자체가 바뀝니다.</p>
+      </div>
+      <div class="card">
+        <span class="card__tag">Reach</span><h3>언어 현지화</h3>
+        <p>같은 영상을 여러 언어로 확장합니다. 더빙은 단순 번역이 아니라 원 화자의 특징을 유지한 채 언어만 바꾸는 작업입니다.</p>
+      </div>
+      <div class="card">
+        <span class="card__tag">Identity</span><h3>화자 캐릭터와 브랜드</h3>
+        <p>채널 고유의 목소리를 정체성처럼 반복해 유지할 수 있습니다. 시리즈물에서는 이것이 곧 브랜드입니다.</p>
+      </div>
+      <div class="card">
+        <span class="card__tag">Access</span><h3>접근성과 상호작용</h3>
+        <p>시각장애 접근성, 교육, 음성 기반 서비스로 이어집니다. 연구 주제로서의 확장 여지도 여기에 있습니다.</p>
+      </div>
+    </div>
+    <p class="note">※ 시장 규모나 점유율 수치는 신뢰할 수 있는 공식 출처를 확인하지 못해 의도적으로 넣지 않았습니다. 대신 <b>사용 환경의 변화</b>로 설명했습니다.</p>
+  </div>
+</section>
+
+<!-- ============================ 기능 ============================ -->
+<section id="product" class="band">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="sechead__num">04</span>
+      <div>
+        <h2>제품 구조 — 여섯 개 범주</h2>
+        <p class="sechead__sub">이 회사를 ‘TTS 회사’로만 보면 절반만 보는 셈입니다. 공식 문서 기준으로 기능 전체를 여섯 범주로 정리했습니다.</p>
+      </div>
+    </div>
+
+    <div class="grid g3 reveal" style="margin-top:24px">
+      <div class="card">
+        <span class="card__tag">01 · 음성 생성</span>
+        <h3>텍스트에서 화자까지</h3>
+        <ul class="list">
+          <li><b>Text to Speech</b> — 텍스트를 음성으로 변환. 모델·음성·설정 조합으로 출력이 결정됩니다.</li>
+          <li><b>Voice Design</b> — 원하는 화자를 <b>글로 설명하면</b> 후보 음성 3종을 만들어 줍니다. 나이·성별·악센트·톤·페이싱·감정을 프롬프트로 지정합니다.</li>
+          <li><b>Voice Library / Cloning</b> — 공개된 음성을 고르거나, 본인 음성을 복제(Rapid·Professional)합니다.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="card__tag">02 · 음성 변환·정리</span>
+        <h3>내 연기를 다른 목소리로</h3>
+        <ul class="list">
+          <li><b>Voice Changer</b> — 내가 연기한 억양·호흡은 그대로 두고 목소리만 다른 화자로 교체합니다.</li>
+          <li><b>Voice Isolator</b> — 녹음에서 목소리와 배경 잡음을 분리합니다. 현장 녹음 후처리에 쓰입니다.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="card__tag">03 · 음성 인식</span>
+        <h3>말에서 텍스트로</h3>
+        <ul class="list">
+          <li><b>Speech to Text</b> — 발화를 텍스트로 전사합니다.</li>
+          <li>자막 제작, 검색 색인, 발화 분석으로 연결됩니다. 콘텐츠 제작에서는 자막 공정이 여기서 줄어듭니다.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="card__tag">04 · 다국어 현지화</span>
+        <h3>Dubbing</h3>
+        <ul class="list">
+          <li>공식 문서 기준 <b>90개 이상 언어</b>를 지원합니다.</li>
+          <li>화자의 <b>정체성·감정·타이밍</b>을 유지한 채 번역한다고 설명합니다. 배경음은 유지되므로 사운드트랙을 다시 믹싱할 필요가 없습니다.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="card__tag">05 · 미디어 생성</span>
+        <h3>오디오 너머로</h3>
+        <ul class="list">
+          <li><b>Music · Sound Effects</b> — 배경음악과 효과음 생성.</li>
+          <li><b>Image · Video</b> — 영상 제작 범위까지 확장. ‘음성 회사’의 경계를 넘는 지점입니다.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="card__tag">06 · 서비스 연결</span>
+        <h3>콘텐츠에서 서비스로</h3>
+        <ul class="list">
+          <li><b>ElevenAgents</b> — 실시간 음성·채팅 에이전트를 구축·배포합니다.</li>
+          <li><b>ElevenAPI</b> — 생성 결과를 제품이나 연구 프로토타입에 연결합니다.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 기술 ============================ -->
+<section id="tech" class="band">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="sechead__num">05</span>
+      <div>
+        <h2>‘자연스럽다’를 여섯 개로 쪼개면</h2>
+        <p class="sechead__sub">‘자연스럽다’는 말은 그대로 두면 비교가 불가능합니다. 관찰 가능한 기준으로 나누면 비로소 평가할 수 있습니다.</p>
+      </div>
+    </div>
+
+    <div class="grid g3 reveal" style="margin-top:24px">
+      <div class="card"><span class="card__tag">Timbre</span><h3>음색과 화자 정체성</h3><p><b>누구의 목소리로 들리는가.</b> Voice Library에서 고르거나, Voice Design으로 만들거나, 복제합니다. 시리즈물에서는 이 선택이 캐릭터 캐스팅과 같습니다.</p></div>
+      <div class="card"><span class="card__tag">Prosody</span><h3>억양과 감정 표현</h3><p><b>문장 어디에 힘이 실리는가.</b> Eleven v3의 Audio Tags로 지시합니다. 대본에 <span class="mono">[whispers]</span> <span class="mono">[laughs]</span> <span class="mono">[sighs]</span> 같은 태그를 적어 넣는 방식입니다.</p></div>
+      <div class="card"><span class="card__tag">Tempo</span><h3>속도와 문장 리듬</h3><p><b>얼마나 빠르게, 어디서 끊어 읽는가.</b> 같은 문장도 리듬이 바뀌면 장르가 바뀝니다. 뉴스 톤과 괴담 톤의 차이는 대부분 여기서 발생합니다.</p></div>
+      <div class="card"><span class="card__tag">Pause</span><h3>멈춤과 호흡</h3><p><b>문장 사이 여백이 만드는 긴장감.</b> 괴담 내레이션에서는 사실상 가장 결정적인 변수이고, 전통적 TTS에서 가장 다루기 어려웠던 부분입니다.</p></div>
+      <div class="card"><span class="card__tag">Consistency</span><h3>장면 간 화자 일관성</h3><p><b>긴 콘텐츠에서 같은 인물로 들리는가.</b> 회차와 장면이 바뀌어도 동일 화자를 유지하는 것은 여전히 관리가 필요한 영역입니다.</p></div>
+      <div class="card"><span class="card__tag">Language</span><h3>언어·발음·더빙</h3><p><b>한국어 발음과 외래어 처리, 그리고 다국어 확장.</b> 언어별 편차가 남아 있어, 한국어 콘텐츠라면 직접 검증이 필요합니다.</p></div>
+    </div>
+
+    <div class="verdict reveal" style="margin-top:24px">
+      <span class="card__tag">발표자의 해석</span>
+      <p>제가 본 ElevenLabs의 기술적 차별점은 “목소리가 더 좋다”가 아니라, <b>연출 지시를 텍스트로 내릴 수 있다</b>는 쪽에 가깝습니다.
+      음성을 <em>고르는</em> 일에서 음성을 <em>연출하는</em> 일로 작업의 성격이 바뀝니다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 경쟁 ============================ -->
+<section id="compare" class="band">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="sechead__num">06</span>
+      <div>
+        <h2>경쟁사 비교</h2>
+        <p class="sechead__sub">점수는 매기지 않았습니다. 동일 조건 벤치마크가 공개돼 있지 않아, <b>각 사 공식 문서가 무엇을 지원한다고 적었는지</b>만 요약하고 질적 표현으로 정리했습니다.</p>
+      </div>
+    </div>
+
+    <div class="tablewrap reveal">
+      <table>
+        <thead>
+          <tr><th>기업</th><th>감정·표현 제어</th><th>화자 설계·클로닝</th><th>다국어</th><th>실시간성</th><th>대표 사용 사례</th></tr>
+        </thead>
+        <tbody>
+          <tr class="is-focus">
+            <th>ElevenLabs</th>
+            <td>강함<span class="mono">Audio Tags로 [whispers] 등 연기 지시 (v3)</span></td>
+            <td>강함<span class="mono">Voice Design(설명→화자) + Professional Cloning</span></td>
+            <td>v3 70개 이상<span class="mono">더빙 90개 이상</span></td>
+            <td>저지연 모델 제공<span class="mono">Flash v2.5 약 75ms</span></td>
+            <td>내레이션·오디오북<span class="mono">더빙·음성 에이전트</span></td>
+          </tr>
+          <tr>
+            <th>OpenAI TTS</th>
+            <td>중간~강함<span class="mono">프롬프트로 톤·억양·속도 지시</span></td>
+            <td>제한적<span class="mono">사전 정의 음성 중심, 사용자 클로닝 미제공</span></td>
+            <td>50개 이상<span class="mono">음성은 영어 최적화</span></td>
+            <td>스트리밍 지원<span class="mono">청크 전송으로 재생 시작</span></td>
+            <td>앱 내 음성 응답<span class="mono">빠른 프로토타입</span></td>
+          </tr>
+          <tr>
+            <th>Google Chirp 3 HD</th>
+            <td>중간<span class="mono">생성 모델 기반의 자연스러운 억양 강조</span></td>
+            <td>별도 제품<span class="mono">Chirp 3: Instant Custom Voice</span></td>
+            <td>60개 이상 언어·지역<span class="mono">음성 30종</span></td>
+            <td>스트리밍 합성 지원</td>
+            <td>클라우드 서비스 통합 음성</td>
+          </tr>
+          <tr>
+            <th>Microsoft Azure TTS</th>
+            <td>중간~강함<span class="mono">SSML로 피치·멈춤·속도·스타일 제어</span></td>
+            <td>Custom neural voice<span class="mono">승인제 · 책임 AI 절차 요구</span></td>
+            <td>표준 음성 100개 이상<span class="mono">언어·로케일 기준</span></td>
+            <td>실시간 + 장문 배치 합성</td>
+            <td>기업 시스템·콜센터<span class="mono">접근성 서비스</span></td>
+          </tr>
+          <tr>
+            <th>Cartesia</th>
+            <td>강함<span class="mono">피치·속도·감정 세밀 제어 명시</span></td>
+            <td>3초 클립으로 클로닝<span class="mono">말투·억양 보존</span></td>
+            <td>더빙 44개 언어</td>
+            <td>빠른 처리 강조<span class="mono">공식 수치는 미확인</span></td>
+            <td>더빙·실시간 음성 경험</td>
+          </tr>
+          <tr>
+            <th>Resemble AI</th>
+            <td>중간~강함<span class="mono">자연어 프롬프트로 음성 변형 생성</span></td>
+            <td>Rapid(10초)·Professional<span class="mono">두 가지 클로닝 경로</span></td>
+            <td>다국어 지원<span class="mono">제품 페이지 기준</span></td>
+            <td>WebSocket 스트리밍</td>
+            <td>기업 배포·온프레미스<span class="mono">SOC2 · HIPAA · GDPR</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">※ 표기는 각 사 공식 문서의 <b>기능 서술을 요약한 질적 표현</b>이며 성능 순위가 아닙니다. 같은 문장을 같은 조건에서 합성해 비교한 결과가 아니라는 점을 분명히 해둡니다.</p>
+
+    <h3 style="margin-top:36px;font-size:18px">그래서 누가 1등인가 — 성립하지 않는 질문</h3>
+    <div class="grid g3 reveal" style="margin-top:14px">
+      <div class="card"><span class="card__tag">ElevenLabs</span><p><b>표현력과 창작자 워크플로.</b> 화자 설계 → 감정 지시 → 더빙까지 한 흐름으로 이어집니다.</p></div>
+      <div class="card"><span class="card__tag">OpenAI</span><p><b>간결한 API와 빠른 프로토타이핑.</b> 서비스에 음성을 빨리 붙여야 할 때 유리합니다.</p></div>
+      <div class="card"><span class="card__tag">Google · Azure</span><p><b>클라우드 인프라와 기업 운영.</b> 보안·컴플라이언스·대규모 운영이 기준일 때의 선택지입니다.</p></div>
+      <div class="card"><span class="card__tag">Cartesia</span><p><b>저지연 음성 경험.</b> 실시간 대화의 반응 속도를 최우선할 때 검토합니다.</p></div>
+      <div class="card"><span class="card__tag">Resemble AI</span><p><b>기업용 배포 선택지.</b> 온프레미스·자체 호스팅과 규정 준수가 필요한 조직에 맞습니다.</p></div>
+      <div class="card" style="border-color:color-mix(in srgb,var(--signal) 32%,var(--line));background:var(--signal-soft)">
+        <span class="card__tag">결론</span>
+        <p style="color:var(--signal-ink)"><b>경쟁 우위는 절대 순위가 아니라 사용 목적과의 적합성.</b> 제 조건은 ① 한국어 내레이션 ② 화자 캐릭터의 반복 재현 ③ 다국어·에이전트 확장 여지였고, 이 세 가지에서 ElevenLabs가 맞았습니다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ A/B ============================ -->
+<section id="ab" class="band band--dark">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="sechead__num">07</span>
+      <div>
+        <h2>같은 문장으로 들어보는 A/B</h2>
+        <p class="sechead__sub">동일한 대본 한 문장을 두 엔진으로 각각 합성했습니다. 재생하면 아래 막대가 실제 파형 크기에 따라 움직입니다.</p>
+      </div>
+    </div>
+
+    <div class="conditions">
+      <span class="conditions__label mono">비교 조건</span>
+      <span class="cond">동일 대본 문장</span>
+      <span class="cond">BGM·효과음 없음</span>
+      <span class="cond">속도 보정 없음</span>
+      <span class="cond">길이 5.000s 동일</span>
+      <span class="cond">−17.5 / −17.6 LUFS</span>
+      <span class="cond cond--off">엔진만 다름</span>
+    </div>
+
+    <div class="grid g2" style="margin-top:20px">
+      <div class="player" id="playerA">
+        <div class="player__head">
+          <span class="player__badge">A</span>
+          <span class="player__title">이전에 쓰던 방식</span>
+        </div>
+        <div class="player__spec">
+          <div><span>엔진</span> ko-KR-InJoonNeural</div>
+          <div><span>조건</span> 자연 속도 · 후보정 없음</div>
+          <div><span>측정</span> 5.000s · −17.5 LUFS</div>
+        </div>
+        <div class="viz" data-viz aria-hidden="true"></div>
+        <div class="player__controls">
+          <button class="btn-play" type="button" data-play>
+            <svg viewBox="0 0 12 14" aria-hidden="true"><path d="M0 0l12 7-12 7z" fill="currentColor"/></svg>
+            <span data-label>A 재생</span>
+          </button>
+          <span class="bar"><i data-bar></i></span>
+          <span class="time mono" data-time>0.0s</span>
+        </div>
+        <p class="pending mono" data-pending hidden>음성 파일을 찾지 못했습니다 — 이 HTML과 같은 폴더에 <b>A_기존제작음성_동일문장_자연속도_5초.mp3</b>가 있어야 합니다.</p>
+        <audio data-audio preload="metadata" src="A_기존제작음성_동일문장_자연속도_5초.mp3"></audio>
+      </div>
+
+      <div class="player is-b" id="playerB">
+        <div class="player__head">
+          <span class="player__badge">B</span>
+          <span class="player__title">ElevenLabs로 설계한 음성</span>
+        </div>
+        <div class="player__spec">
+          <div><span>엔진</span> Eleven v3 · Voice Design</div>
+          <div><span>화자</span> 낮고 담담한 한국인 남성 이야기꾼</div>
+          <div><span>측정</span> 5.000s · −17.6 LUFS</div>
+        </div>
+        <div class="viz" data-viz aria-hidden="true"></div>
+        <div class="player__controls">
+          <button class="btn-play" type="button" data-play>
+            <svg viewBox="0 0 12 14" aria-hidden="true"><path d="M0 0l12 7-12 7z" fill="currentColor"/></svg>
+            <span data-label>B 재생</span>
+          </button>
+          <span class="bar"><i data-bar></i></span>
+          <span class="time mono" data-time>0.0s</span>
+        </div>
+        <p class="pending mono" data-pending hidden>음성 파일을 찾지 못했습니다 — 이 HTML과 같은 폴더에 <b>B_ElevenLabs_동일문장_원속도_5초.mp3</b>가 있어야 합니다.</p>
+        <audio data-audio preload="metadata" src="B_ElevenLabs_동일문장_원속도_5초.mp3"></audio>
+      </div>
+    </div>
+
+    <div class="player is-ab" id="playerAB" style="margin-top:18px">
+      <div class="player__head">
+        <span class="player__badge">A→B</span>
+        <span class="player__title">연속 비교 — 같은 문장, 두 엔진을 이어서</span>
+        <span class="mono" style="font-size:12px;color:#6E7C88;margin-left:auto">10.000s</span>
+      </div>
+      <div class="viz" data-viz aria-hidden="true"></div>
+      <div class="player__controls">
+        <button class="btn-play" type="button" data-play>
+          <svg viewBox="0 0 12 14" aria-hidden="true"><path d="M0 0l12 7-12 7z" fill="currentColor"/></svg>
+          <span data-label>연속 재생</span>
+        </button>
+        <span class="bar"><i data-bar></i><em class="split" aria-hidden="true"></em></span>
+        <span class="time mono" data-time>0.0s</span>
+      </div>
+      <p class="mono" style="font-size:12px;color:#6E7C88;margin:0">앞 5초 A · 뒤 5초 B — 끊지 않고 이어 들으면 차이가 더 분명하게 드러납니다.</p>
+      <p class="pending mono" data-pending hidden>음성 파일을 찾지 못했습니다 — 같은 폴더에 <b>AB_동일문장_연속비교_10초.mp3</b>가 있어야 합니다.</p>
+      <audio data-audio preload="metadata" src="AB_동일문장_연속비교_10초.mp3"></audio>
+    </div>
+
+    <div class="runorder">
+      <span class="step"><b>1</b> A 재생</span>
+      <span class="step"><b>2</b> B 재생</span>
+      <span class="step"><b>3</b> 연속 비교 10초</span>
+      <span class="step"><b>4</b> 첫인상 질문 — “어느 쪽이 더 ‘이야기’처럼 들리셨습니까?”</span>
+    </div>
+
+    <div class="grid g2" style="margin-top:30px">
+      <div>
+        <h3 style="font-size:18px;margin-bottom:6px">들으실 때 확인할 여섯 가지</h3>
+        <ul class="list">
+          <li>음색의 정체성 — 누구의 목소리로 들리는가</li>
+          <li>낭독형 느낌이 남는지 — ‘읽고 있다’는 인상</li>
+          <li>문장별 억양 변화 — 강약이 어디에 걸리는지</li>
+          <li>멈춤과 호흡 — 문장 사이 여백의 길이</li>
+          <li>장면의 분위기 — 괴담이라는 장르에 맞는지</li>
+          <li>긴 콘텐츠에서의 화자 일관성</li>
+        </ul>
+      </div>
+      <div>
+        <h3 style="font-size:18px;margin-bottom:6px">제가 관찰한 차이 <span class="tag" style="vertical-align:middle">주관적 소견</span></h3>
+        <ul class="list">
+          <li><b>A</b> — 소리 자체는 또렷하지만, 속도·피치 조절 중심이라 <b>낭독형 인상</b>이 남습니다. 문장마다 강약이 비슷하게 유지됩니다.</li>
+          <li><b>B</b> — 낮고 담담한 화자 캐릭터가 유지되고, 문장별로 힘을 주는 지점을 <b>제가 지시해서</b> 만들 수 있었습니다.</li>
+          <li><b>제작 과정의 변화</b> — B에서는 감정·멈춤을 지시하고 여러 버전을 만들어 고르는 과정이 새로 생겼습니다. 음성을 ‘고르는’ 일에서 ‘연출하는’ 일이 됐습니다.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="grid g2" style="margin-top:26px">
+      <div class="callout" style="background:#132220;border-color:#1C5C56">
+        <h3 style="color:#3FC3B4">통제한 것</h3>
+        <ul class="list">
+          <li style="color:#A9B3BC"><b style="color:#E9ECEE">동일 대본 문장</b> — 같은 텍스트를 두 엔진에 그대로 입력했습니다.</li>
+          <li style="color:#A9B3BC"><b style="color:#E9ECEE">보이스 트랙만</b> — BGM·효과음·리버브 없이 합성 원본만 사용했습니다.</li>
+          <li style="color:#A9B3BC"><b style="color:#E9ECEE">라우드니스 일치</b> — 측정값 −17.5 / −17.6 LUFS, 차이 0.1 LU. ‘더 큰 소리가 더 좋게 들리는’ 착각을 배제했습니다.</li>
+          <li style="color:#A9B3BC"><b style="color:#E9ECEE">길이 동일</b> — 두 파일 모두 5.000초. 속도 보정도 하지 않았습니다.</li>
+        </ul>
+      </div>
+      <div class="callout" style="background:#231C10;border-color:#4A3A20">
+        <h3 style="color:#D9A257">⚠ 그래도 남는 한계</h3>
+        <ul class="list">
+          <li style="color:#A9B3BC"><b style="color:#E9ECEE">문장 한 개</b>의 결과입니다. 문장·장르가 바뀌면 인상도 바뀔 수 있습니다.</li>
+          <li style="color:#A9B3BC"><b style="color:#E9ECEE">블라인드가 아닙니다.</b> 여러분은 지금 어느 쪽이 어느 엔진인지 알고 듣습니다. 기대 편향이 들어갑니다.</li>
+          <li style="color:#A9B3BC"><b style="color:#E9ECEE">평가자는 저 한 명</b>입니다. 정량 결론을 내려면 다수 청취자의 <b style="color:#E9ECEE">MOS 평가</b>와 문장 표본 확대가 필요합니다.</li>
+          <li style="color:#A9B3BC">따라서 이 A/B는 <b style="color:#E9ECEE">‘어떤 차이가 관찰되는지 보여주는 사례’</b>이지, 모델 우열의 증거가 아닙니다.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 제작 흐름 ============================ -->
+<section id="workflow" class="band">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="sechead__num">08</span>
+      <div>
+        <h2>제작 과정에서 달라진 점</h2>
+        <p class="sechead__sub">조절할 수 있는 변수가 두 개에서 여섯 개로 늘었습니다. 좋아진 것과 번거로워진 것이 함께 생겼습니다.</p>
+      </div>
+    </div>
+
+    <div class="reveal" style="margin-top:24px">
+      <p class="mono" style="font-size:12.5px;color:var(--text-3);letter-spacing:.06em">BEFORE — 조절 변수 2개</p>
+      <div class="flow" style="grid-template-columns:repeat(4,1fr);margin-top:10px">
+        <div class="flow__step"><h4 style="margin-top:0">음성 선택</h4><p>목록에서 고르기</p></div>
+        <div class="flow__step"><h4 style="margin-top:0">속도·피치 조절</h4><p>수치 두 개를 조정</p></div>
+        <div class="flow__step"><h4 style="margin-top:0">BGM·자막</h4><p>편집 툴에서 얹기</p></div>
+        <div class="flow__step"><h4 style="margin-top:0">영상 배포</h4><p>업로드</p></div>
+      </div>
+
+      <p class="mono" style="font-size:12.5px;color:var(--signal);letter-spacing:.06em;margin-top:28px">AFTER — 앞단에 ‘설계’가 생김</p>
+      <div class="flow" style="grid-template-columns:repeat(6,1fr);margin-top:10px">
+        <div class="flow__step flow__step--now"><h4 style="margin-top:0">화자 설계</h4><p>캐릭터를 글로 정의</p></div>
+        <div class="flow__step flow__step--now"><h4 style="margin-top:0">장면 디렉션</h4><p>장면별 읽기 방식</p></div>
+        <div class="flow__step flow__step--now"><h4 style="margin-top:0">감정·멈춤 지시</h4><p>Audio Tags 삽입</p></div>
+        <div class="flow__step flow__step--now"><h4 style="margin-top:0">버전 생성·선택</h4><p>여러 개 만들고 고르기</p></div>
+        <div class="flow__step flow__step--now"><h4 style="margin-top:0">믹싱·자막</h4><p>기존 공정</p></div>
+        <div class="flow__step flow__step--now"><h4 style="margin-top:0">장편·쇼츠·다국어</h4><p>같은 화자로 확장</p></div>
+      </div>
+    </div>
+
+    <div class="grid g2 reveal" style="margin-top:26px">
+      <div class="callout">
+        <h3>단점 — 단계와 비용이 늘어남</h3>
+        <ul class="list">
+          <li>설계와 재생성에 시간이 듭니다. 마음에 드는 버전이 나올 때까지 반복합니다.</li>
+          <li>버전을 만들 때마다 <b>유료 크레딧이 소모</b>됩니다. 제작 편수가 많아질수록 비용 관리가 필요합니다.</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:color-mix(in srgb,var(--signal) 32%,var(--line));background:var(--signal-soft)">
+        <h3 style="color:var(--signal-ink)">장점 — 표현의 통제권</h3>
+        <ul class="list">
+          <li style="color:var(--signal-ink)">원하는 화자의 인상과 강약을 <b>반복해서</b> 만들 수 있습니다.</li>
+          <li style="color:var(--signal-ink)">여러 버전을 비교해 고르는 선택지가 생깁니다. 결과가 우연이 아니라 의도의 산물이 됩니다.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ SWOT ============================ -->
+<section id="swot" class="band">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="sechead__num">09</span>
+      <div>
+        <h2>SWOT</h2>
+        <p class="sechead__sub">일반론이 아니라, 앞에서 확인한 기능 구조·경쟁 구도·실제 제작 경험에서만 뽑았습니다.</p>
+      </div>
+    </div>
+
+    <div class="swot reveal" style="margin-top:24px">
+      <div class="swot__q swot__q--pos">
+        <h3><em>S</em> 강점 (Strengths)</h3>
+        <ul class="list">
+          <li>자연스러운 억양과 <b>화자 캐릭터 설계</b> — 내레이션 콘텐츠에 직접적인 도움</li>
+          <li><b>Voice Design · Audio Tags</b>로 감정과 멈춤을 텍스트로 지시 (5장)</li>
+          <li>Creative · Agents · API가 한 흐름으로 연결되는 제품 구조 (2장)</li>
+          <li>여러 버전을 만들어 고르는, 창작자 친화적인 제작 흐름 (8장)</li>
+        </ul>
+      </div>
+      <div class="swot__q swot__q--neg">
+        <h3><em>W</em> 약점 (Weaknesses)</h3>
+        <ul class="list">
+          <li>유료 크레딧 기반 — <b>재생성할수록 비용이 증가</b> (8장)</li>
+          <li>프롬프트와 언어에 따른 결과 편차. 한국어는 특히 직접 검증이 필요 (5장)</li>
+          <li>회차마다 같은 음성을 재현하는 <b>일관성 관리 부담</b></li>
+          <li>기능이 늘어날수록 복잡해지는 워크플로</li>
+        </ul>
+      </div>
+      <div class="swot__q swot__q--pos">
+        <h3><em>O</em> 기회 (Opportunities)</h3>
+        <ul class="list">
+          <li>한국어·다국어 콘텐츠 현지화 — 더빙 90개 이상 언어 (4장)</li>
+          <li>교육·오디오북·게임·미디어 등 인접 시장으로의 확장</li>
+          <li>음성 에이전트 — 콘텐츠에서 서비스 인터페이스로 (3장)</li>
+          <li>접근성과 공공서비스 영역의 수요</li>
+        </ul>
+      </div>
+      <div class="swot__q swot__q--neg">
+        <h3><em>T</em> 위협 (Threats)</h3>
+        <ul class="list">
+          <li>OpenAI·Google·Microsoft의 <b>가격·인프라 경쟁</b> (6장)</li>
+          <li>딥페이크·사칭 문제와 그에 따르는 신뢰 비용</li>
+          <li>음성 권리·동의·저작권 <b>규제 강화 가능성</b></li>
+          <li>제작 흐름이 특정 플랫폼에 묶이는 종속 위험</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">괄호 안의 장 번호는 이 페이지에서 해당 근거를 다룬 섹션입니다. 위협의 2·3번은 이 산업 전체의 조건이라, 연구 주제로서는 오히려 여기가 더 흥미로운 지점일 수 있습니다.</p>
+  </div>
+</section>
+
+<!-- ============================ 결론 ============================ -->
+<section id="verdict" class="band">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="sechead__num">10</span>
+      <div>
+        <h2>추천 대상과 최종 판단</h2>
+        <p class="sechead__sub">‘모두에게 최고’가 아니라 ‘어떤 조건에서 맞는가’로 정리했습니다.</p>
+      </div>
+    </div>
+
+    <div class="grid g2 reveal" style="margin-top:24px">
+      <div class="card" style="border-color:color-mix(in srgb,var(--signal) 32%,var(--line))">
+        <span class="card__tag">권합니다</span>
+        <h3>이런 경우라면 써볼 가치가 있습니다</h3>
+        <ul class="list">
+          <li>스토리·내레이션·교육 영상을 만드는 제작자</li>
+          <li>화자 캐릭터 자체가 콘텐츠의 정체성인 채널</li>
+          <li>같은 콘텐츠를 여러 언어로 확장하려는 팀</li>
+          <li>음성 에이전트·API를 다루는 연구자와 개발자</li>
+        </ul>
+      </div>
+      <div class="card">
+        <span class="card__tag">다시 생각해 보세요</span>
+        <h3>다른 선택이 나을 수 있는 경우</h3>
+        <ul class="list">
+          <li>기업 클라우드 통합이 최우선 → <b>Azure · Google</b></li>
+          <li>초저지연 대화 경험이 최우선 → <b>Cartesia</b> 등</li>
+          <li>온프레미스 운영·컴플라이언스가 필수 → <b>Resemble AI</b></li>
+          <li>비용 예측 가능성이 표현력보다 중요한 경우 — 크레딧 과금이 불리할 수 있습니다</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="verdict reveal" style="margin-top:24px">
+      <span class="card__tag">발표자의 최종 판단</span>
+      <p>“ElevenLabs는 모든 환경에서 최고의 서비스라기보다, <b>한국어 서사형 콘텐츠에서 화자 캐릭터와 감정·멈춤을 직접 설계하고 싶은 제작자</b>에게 한 번 사용해볼 가치가 높은 서비스다.”</p>
+    </div>
+
+    <h3 style="margin-top:38px;font-size:18px">오늘 남기고 싶은 세 가지</h3>
+    <div class="grid g3 reveal" style="margin-top:14px">
+      <div class="card"><span class="card__tag">01</span><h3>확장하는 기업</h3><p>TTS 회사에서 AI 오디오·미디어·에이전트 플랫폼으로 확장하고 있습니다. 제품 범위 자체가 전략입니다.</p></div>
+      <div class="card"><span class="card__tag">02</span><h3>경쟁력의 위치</h3><p>경쟁력은 음성 표현력 하나가 아니라, <b>표현력과 창작자 워크플로가 결합된 지점</b>에 있습니다.</p></div>
+      <div class="card"><span class="card__tag">03</span><h3>사례와 한계</h3><p>제 사례에서는 캐릭터·억양 설계가 확실히 쉬웠지만, 이를 모델 성능의 결론으로 말하지는 않겠습니다. 통제된 비교와 권리·비용 검토가 함께 필요합니다.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ 출처 ============================ -->
+<section id="sources" class="band band--dark">
+  <div class="wrap">
+    <div class="sechead">
+      <span class="sechead__num">REF</span>
+      <div>
+        <h2>출처</h2>
+        <p class="sechead__sub">가격·언어 수·기능명 등 변동 가능한 정보는 모두 각 기업의 공식 사이트·공식 문서로 확인했습니다. 확인 시점 2026년 9월 20일.</p>
+      </div>
+    </div>
+
+    <dl class="srclist" style="margin-top:22px">
+      <div class="srcitem"><dt>ElevenLabs — 기업 소개</dt><dd><a href="https://elevenlabs.io/about" target="_blank" rel="noopener">elevenlabs.io/about</a> — 기업 정체성, human-like voice model, 70개 이상 언어, 세 플랫폼, 안전팀</dd></div>
+      <div class="srcitem"><dt>ElevenLabs — 안전</dt><dd><a href="https://elevenlabs.io/safety" target="_blank" rel="noopener">elevenlabs.io/safety</a> — 다섯 가지 원칙, PVC 검증, C2PA, AI Speech Classifier</dd></div>
+      <div class="srcitem"><dt>ElevenLabs — 요금제</dt><dd><a href="https://elevenlabs.io/pricing" target="_blank" rel="noopener">elevenlabs.io/pricing</a> — 플랜별 크레딧, 무료 플랜의 Voice Design 사용 가능 여부</dd></div>
+      <div class="srcitem"><dt>ElevenLabs — TTS</dt><dd><a href="https://elevenlabs.io/docs/eleven-creative/playground/text-to-speech" target="_blank" rel="noopener">docs · playground/text-to-speech</a> — 모델별 언어 수, Audio Tags, Flash v2.5 약 75ms / v3 Conversational 약 280ms</dd></div>
+      <div class="srcitem"><dt>ElevenLabs — Voice Design</dt><dd><a href="https://elevenlabs.io/docs/eleven-creative/voices/voice-design" target="_blank" rel="noopener">docs · voices/voice-design</a> — 프롬프트로 화자 생성, 후보 3종, Eleven v3 호환</dd></div>
+      <div class="srcitem"><dt>ElevenLabs — Dubbing</dt><dd><a href="https://elevenlabs.io/docs/overview/capabilities/dubbing" target="_blank" rel="noopener">docs · capabilities/dubbing</a> — 90개 이상 언어, 화자 정체성·감정·타이밍 유지</dd></div>
+      <div class="srcitem"><dt>OpenAI TTS</dt><dd><a href="https://developers.openai.com/api/docs/guides/text-to-speech" target="_blank" rel="noopener">developers.openai.com — text-to-speech</a> — gpt-4o-mini-tts, 프롬프트 제어, 스트리밍, 50개 이상 언어</dd></div>
+      <div class="srcitem"><dt>Google Chirp 3 HD</dt><dd><a href="https://docs.cloud.google.com/text-to-speech/docs/chirp3-hd" target="_blank" rel="noopener">docs.cloud.google.com — chirp3-hd</a> — 음성 30종, 60개 이상 언어·지역, 스트리밍 합성</dd></div>
+      <div class="srcitem"><dt>Microsoft Azure TTS</dt><dd><a href="https://learn.microsoft.com/en-us/azure/ai-services/speech-service/text-to-speech" target="_blank" rel="noopener">learn.microsoft.com — text-to-speech</a> — 표준 음성 100개 이상 언어·로케일, SSML, custom voice 승인제</dd></div>
+      <div class="srcitem"><dt>Cartesia</dt><dd><a href="https://www.cartesia.ai/product/ai-dubbing" target="_blank" rel="noopener">cartesia.ai — ai-dubbing</a> — 피치·속도·감정 제어, 3초 클립 클로닝, 44개 언어</dd></div>
+      <div class="srcitem"><dt>Resemble AI</dt><dd><a href="https://www.resemble.ai/products/voice-creation" target="_blank" rel="noopener">resemble.ai — voice-creation</a> — Rapid/Professional 클로닝, 온프레미스, SOC2·HIPAA·GDPR</dd></div>
+      <div class="srcitem"><dt>AI Summit Seoul</dt><dd><a href="https://www.aisummitseoul.com/changhyun-lee" target="_blank" rel="noopener">aisummitseoul.com — 세션 페이지</a> — 연사 소속, 세션 제목과 설명</dd></div>
+      <div class="srcitem"><dt>발표자 제작 음성</dt><dd>동일 대본 문장을 두 엔진으로 각각 합성 — A: ko-KR-InJoonNeural(자연 속도) / B: ElevenLabs Eleven v3 · Voice Design. 각 5.000초, −17.5 / −17.6 LUFS 측정</dd></div>
+    </dl>
+
+    <p class="note">기업의 공식 주장(claim) · 발표자의 실제 관찰 · 발표자의 해석은 페이지 전체에서 구분해 표기했습니다. 출처가 확인되지 않는 시장 규모·점유율 수치, 임의의 성능 점수나 순위는 사용하지 않았습니다.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">ElevenLabs 기업 분석 · 양소연 (AI바이오푸드테크학과) · 2026. 09. 21.</div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- hero wave (정적 렌더, 로드 즉시 보임) ---------- */
+  var hw = document.getElementById('heroWave');
+  if (hw) {
+    var N = 64, html = '';
+    for (var i = 0; i < N; i++) {
+      var t = i / N;
+      var h = 10 + Math.abs(Math.sin(t * 9.2)) * 26 + Math.abs(Math.sin(t * 23.7)) * 14 + (i % 5) * 1.5;
+      html += '<i style="height:' + h.toFixed(1) + 'px"></i>';
+    }
+    hw.innerHTML = html;
+  }
+
+  /* ---------- scroll progress + active nav ---------- */
+  var bar = document.getElementById('progress');
+  var links = Array.prototype.slice.call(document.querySelectorAll('.navlinks a'));
+  var targets = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  var ticking = false;
+  function onScroll(){
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function(){
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - window.innerHeight;
+      if (bar) bar.style.width = (max > 0 ? (window.scrollY / max) * 100 : 0) + '%';
+      var active = -1;
+      for (var i = 0; i < targets.length; i++) {
+        var el = targets[i];
+        if (el && el.getBoundingClientRect().top <= 140) active = i;
+      }
+      links.forEach(function(a, i){ a.classList.toggle('is-active', i === active); });
+      ticking = false;
+    });
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  /* ---------- A/B players (WebAudio 실시간 레벨 미터) ---------- */
+  var BARS = 48, ctx = null, players = [];
+
+  function buildViz(el){
+    var h = '';
+    for (var i = 0; i < BARS; i++) h += '<i style="height:2px"></i>';
+    el.innerHTML = h;
+    return Array.prototype.slice.call(el.querySelectorAll('i'));
+  }
+
+  function setup(rootId){
+    var root = document.getElementById(rootId);
+    if (!root) return null;
+    var audio = root.querySelector('[data-audio]');
+    var btn = root.querySelector('[data-play]');
+    var label = root.querySelector('[data-label]');
+    var time = root.querySelector('[data-time]');
+    var barFill = root.querySelector('[data-bar]');
+    var bars = buildViz(root.querySelector('[data-viz]'));
+    var pending = root.querySelector('[data-pending]');
+    var baseLabel = label.textContent;
+    var analyser = null, data = null, raf = 0;
+
+    audio.addEventListener('error', function(){
+      if (pending) pending.hidden = false;
+      btn.disabled = true;
+      btn.style.opacity = '.45';
+      btn.style.cursor = 'not-allowed';
+      label.textContent = '파일 없음';
+    });
+
+    function connect(){
+      if (analyser) return;
+      try {
+        ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+        var src = ctx.createMediaElementSource(audio);
+        analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.smoothingTimeConstant = 0.72;
+        src.connect(analyser);
+        analyser.connect(ctx.destination);
+        data = new Uint8Array(analyser.frequencyBinCount);
+      } catch (e) { analyser = null; }
+    }
+
+    function frame(){
+      if (audio.paused) return;
+      var dur = audio.duration || 5;
+      barFill.style.width = ((audio.currentTime / dur) * 100) + '%';
+      time.textContent = audio.currentTime.toFixed(1) + 's';
+      if (analyser) {
+        analyser.getByteFrequencyData(data);
+        var step = Math.max(1, Math.floor(data.length / BARS));
+        for (var i = 0; i < BARS; i++) {
+          var sum = 0;
+          for (var j = 0; j < step; j++) sum += data[i * step + j] || 0;
+          var v = sum / step / 255;
+          bars[i].style.height = Math.max(2, v * 46 + 2).toFixed(1) + 'px';
+        }
+      } else {
+        var t = audio.currentTime;
+        for (var k = 0; k < BARS; k++) {
+          var hh = 4 + Math.abs(Math.sin(t * 6 + k * 0.4)) * 26;
+          bars[k].style.height = hh.toFixed(1) + 'px';
+        }
+      }
+      raf = requestAnimationFrame(frame);
+    }
+
+    function reset(){
+      cancelAnimationFrame(raf);
+      root.classList.remove('is-playing');
+      label.textContent = baseLabel;
+      bars.forEach(function(b){ b.style.height = '2px'; });
+    }
+
+    btn.addEventListener('click', function(){
+      if (!audio.paused) { audio.pause(); return; }
+      players.forEach(function(p){ if (p.audio !== audio) { p.audio.pause(); } });
+      connect();
+      if (ctx && ctx.state === 'suspended') ctx.resume();
+      audio.currentTime = 0;
+      audio.play().catch(function(){});
+    });
+
+    audio.addEventListener('play', function(){
+      root.classList.add('is-playing');
+      label.textContent = '일시정지';
+      raf = requestAnimationFrame(frame);
+    });
+    audio.addEventListener('pause', reset);
+    audio.addEventListener('ended', function(){
+      reset();
+      barFill.style.width = '100%';
+      time.textContent = (audio.duration || 5).toFixed(1) + 's';
+    });
+
+    return {audio: audio};
+  }
+
+  ['playerA','playerB','playerAB'].forEach(function(id){
+    var p = setup(id);
+    if (p) players.push(p);
+  });
+})();
+</script>
+
+</body>
+</html>
