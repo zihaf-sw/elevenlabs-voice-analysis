@@ -1,9 +1,3 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>ElevenLabs 음성 분석</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -200,6 +194,20 @@ section{scroll-margin-top:84px}
 .flow__step p{font-size:14px;color:var(--text-2);line-height:1.6}
 .flow__step--now{border-color:var(--signal);background:var(--signal-soft)}
 .flow__step--now h4{color:var(--signal-ink)}
+.flow__audio{display:flex;align-items:center;gap:7px;margin-top:12px}
+.flow__play{
+  display:inline-flex;align-items:center;justify-content:center;flex:none;
+  width:24px;height:24px;border-radius:999px;border:none;cursor:pointer;
+  background:var(--text);color:var(--surface);
+}
+.flow__play:hover{opacity:.85}
+.flow__play:disabled{cursor:not-allowed;opacity:.35}
+.flow__play svg{width:9px;height:9px}
+.flow__bar{flex:1;height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.flow__bar i{display:block;height:100%;width:0;background:var(--signal)}
+.flow__time{font-family:var(--mono);font-size:10px;color:var(--text-3);flex:none}
+.flow__audio .pending{font-size:10px;margin:0;position:absolute}
+.flow__step.is-playing .flow__play{background:var(--signal-ink,var(--signal))}
 
 /* ---------- table ---------- */
 .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-top:8px}
@@ -328,8 +336,6 @@ footer{padding-block:34px;color:var(--text-3);font-size:13px}
 }
 </style>
 
-</head>
-<body>
 <div class="topbar">
   <div class="topbar__inner">
     <span class="brandmark">
@@ -364,10 +370,7 @@ footer{padding-block:34px;color:var(--text-3);font-size:13px}
       그리고 이 비교가 <b>말할 수 없는 것</b>까지 함께 정리했습니다.
     </p>
     <div class="hero__meta">
-      <span>발표자 <b>양소연</b></span>
-      <span>소속 <b>AI바이오푸드테크학과</b></span>
-      <span>발표일 <b>2026. 09. 21.</b></span>
-      <span>분량 <b>약 20분 · 12개 섹션</b></span>
+      <span>정리일 <b>2026. 09. 21.</b></span>
     </div>
     <div class="wave" id="heroWave" aria-hidden="true"></div>
   </div>
@@ -609,12 +612,49 @@ footer{padding-block:34px;color:var(--text-3);font-size:13px}
     </div>
 
     <div class="flow reveal">
-      <div class="flow__step"><span class="n">01 / 과거</span><h4>전통적 TTS</h4><p>정해진 음성으로 또박또박 낭독. 조절 가능한 것은 속도와 피치 정도.</p></div>
-      <div class="flow__step"><span class="n">02</span><h4>자연스러운 생성</h4><p>사람 목소리와 구분이 어려운 수준의 합성. 품질 문제가 먼저 해결된 단계.</p></div>
-      <div class="flow__step"><span class="n">03</span><h4>캐릭터·감정 설계</h4><p>누가, 어떤 감정으로, 어디서 멈추며 말하는지를 지정하는 단계.</p></div>
-      <div class="flow__step"><span class="n">04</span><h4>다국어 더빙</h4><p>화자의 정체성과 감정을 유지한 채 언어만 교체. 재녹음 없이 시장 확장.</p></div>
+      <div class="flow__step">
+        <span class="n">01 / 과거</span><h4>전통적 TTS</h4><p>정해진 음성으로 또박또박 낭독. 조절 가능한 것은 속도와 피치 정도.</p>
+        <div class="flow__audio" data-audio-root>
+          <button class="flow__play" type="button" data-play aria-label="01 재생"><svg viewBox="0 0 12 14" data-icon aria-hidden="true"><path d="M0 0l12 7-12 7z" fill="currentColor"/></svg></button>
+          <span class="flow__bar"><i data-bar></i></span>
+          <span class="flow__time mono" data-time>0.0s</span>
+          <p class="pending mono" data-pending hidden>음성 파일 없음</p>
+          <audio data-audio preload="metadata" src="A_기존제작음성_동일문장_자연속도_5초.mp3"></audio>
+        </div>
+      </div>
+      <div class="flow__step">
+        <span class="n">02</span><h4>자연스러운 생성</h4><p>사람 목소리와 구분이 어려운 수준의 합성. 품질 문제가 먼저 해결된 단계.</p>
+        <div class="flow__audio" data-audio-root>
+          <button class="flow__play" type="button" data-play aria-label="02 재생"><svg viewBox="0 0 12 14" data-icon aria-hidden="true"><path d="M0 0l12 7-12 7z" fill="currentColor"/></svg></button>
+          <span class="flow__bar"><i data-bar></i></span>
+          <span class="flow__time mono" data-time>0.0s</span>
+          <p class="pending mono" data-pending hidden>음성 파일 없음</p>
+          <audio data-audio preload="metadata" src="2_자연스러운생성_기본음성.mp3"></audio>
+        </div>
+      </div>
+      <div class="flow__step">
+        <span class="n">03</span><h4>캐릭터·감정 설계</h4><p>누가, 어떤 감정으로, 어디서 멈추며 말하는지를 지정하는 단계.</p>
+        <div class="flow__audio" data-audio-root>
+          <button class="flow__play" type="button" data-play aria-label="03 재생"><svg viewBox="0 0 12 14" data-icon aria-hidden="true"><path d="M0 0l12 7-12 7z" fill="currentColor"/></svg></button>
+          <span class="flow__bar"><i data-bar></i></span>
+          <span class="flow__time mono" data-time>0.0s</span>
+          <p class="pending mono" data-pending hidden>음성 파일 없음</p>
+          <audio data-audio preload="metadata" src="B_ElevenLabs_동일문장_원속도_5초.mp3"></audio>
+        </div>
+      </div>
+      <div class="flow__step">
+        <span class="n">04</span><h4>다국어 더빙</h4><p>화자의 정체성과 감정을 유지한 채 언어만 교체. 재녹음 없이 시장 확장.</p>
+        <div class="flow__audio" data-audio-root>
+          <button class="flow__play" type="button" data-play aria-label="04 재생"><svg viewBox="0 0 12 14" data-icon aria-hidden="true"><path d="M0 0l12 7-12 7z" fill="currentColor"/></svg></button>
+          <span class="flow__bar"><i data-bar></i></span>
+          <span class="flow__time mono" data-time>0.0s</span>
+          <p class="pending mono" data-pending hidden>음성 파일 없음</p>
+          <audio data-audio preload="metadata" src="4_다국어더빙_영어버전.mp3"></audio>
+        </div>
+      </div>
       <div class="flow__step flow__step--now"><span class="n">05 / 현재</span><h4>실시간 음성 에이전트</h4><p>듣고 답하는 대화형 인터페이스. 콘텐츠가 아니라 서비스의 층.</p></div>
     </div>
+    <p class="note" style="margin-top:10px">▶ 각 단계 버튼을 누르면 해당 단계에 해당하는 실제 음성을 들을 수 있습니다 (1·3단계는 앞서 사용한 통제 비교 음성, 2·4단계는 별도로 생성한 예시 음성).</p>
 
     <div class="grid g4 reveal" style="margin-top:24px">
       <div class="card">
@@ -1128,7 +1168,7 @@ footer{padding-block:34px;color:var(--text-3);font-size:13px}
 </section>
 
 <footer>
-  <div class="wrap">ElevenLabs 기업 분석 · 양소연 (AI바이오푸드테크학과) · 2026. 09. 21.</div>
+  <div class="wrap">ElevenLabs 기업 분석 · 2026. 09. 21.</div>
 </footer>
 
 <script>
@@ -1275,8 +1315,55 @@ footer{padding-block:34px;color:var(--text-3);font-size:13px}
     var p = setup(id);
     if (p) players.push(p);
   });
+
+  /* ---------- flow step mini players (재생 버튼만, 파형 없음) ---------- */
+  var PLAY_ICON = '<path d="M0 0l12 7-12 7z" fill="currentColor"/>';
+  var PAUSE_ICON = '<rect x="0" y="0" width="4" height="14" fill="currentColor"/><rect x="8" y="0" width="4" height="14" fill="currentColor"/>';
+
+  function setupMini(root){
+    var audio = root.querySelector('[data-audio]');
+    var btn = root.querySelector('[data-play]');
+    var icon = root.querySelector('[data-icon]');
+    var barFill = root.querySelector('[data-bar]');
+    var time = root.querySelector('[data-time]');
+    var pending = root.querySelector('[data-pending]');
+    var step = root.closest('.flow__step');
+
+    audio.addEventListener('error', function(){
+      if (pending) pending.hidden = false;
+      btn.disabled = true;
+    });
+    btn.addEventListener('click', function(){
+      if (!audio.paused) { audio.pause(); return; }
+      players.forEach(function(p){ if (p.audio !== audio) p.audio.pause(); });
+      audio.currentTime = 0;
+      audio.play().catch(function(){});
+    });
+    audio.addEventListener('play', function(){
+      icon.innerHTML = PAUSE_ICON;
+      if (step) step.classList.add('is-playing');
+    });
+    function stop(){
+      icon.innerHTML = PLAY_ICON;
+      if (step) step.classList.remove('is-playing');
+    }
+    audio.addEventListener('pause', stop);
+    audio.addEventListener('ended', function(){
+      stop();
+      barFill.style.width = '0%';
+      time.textContent = '0.0s';
+    });
+    audio.addEventListener('timeupdate', function(){
+      var dur = audio.duration || 5;
+      barFill.style.width = ((audio.currentTime / dur) * 100) + '%';
+      time.textContent = audio.currentTime.toFixed(1) + 's';
+    });
+    return {audio: audio};
+  }
+
+  Array.prototype.slice.call(document.querySelectorAll('[data-audio-root]')).forEach(function(root){
+    var p = setupMini(root);
+    if (p) players.push(p);
+  });
 })();
 </script>
-
-</body>
-</html>
